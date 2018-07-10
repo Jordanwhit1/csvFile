@@ -1,0 +1,28 @@
+
+def get_attachment(msg, content_type):
+    """
+    Moves through a tree of email Messages to find an attachment.
+    :param msg: An email Message object containing an attachment in its Message tree
+    :param content_type: The type of attachment that is being searched for
+    :return: An email Message object containing base64 encoded contents (i.e. the attachment)
+    """
+    attachment = None
+    msg_content_type = msg.get_content_type()
+
+    if ((msg_content_type == content_type or msg_content_type == 'text/plain')
+            and is_base64(msg.get_payload())):
+        attachment = msg
+
+    elif msg_content_type.startswith('multipart/'):
+        for part in msg.get_payload():
+            attachment = get_attachment(part, content_type)
+            attachment_content_type = attachment.get_content_type()
+
+            if (attachment and (attachment_content_type == content_type
+                                or attachment_content_type == 'text/plain')
+                    and is_base64(attachment.get_payload())):
+                break
+            else:
+                attachment = None
+
+    return attachment
