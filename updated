@@ -1,0 +1,29 @@
+import base64
+
+
+
+def get_attachment(msg, content_type):
+
+    attachment = None
+    msg_content_type = msg.get_content_type()
+
+    if ((msg_content_type == content_type or msg_content_type == 'text/plain')
+            and is_base64(msg.get_payload())):
+        attachment = msg
+
+    elif msg_content_type.startswith('multipart/'):
+        for part in msg.get_payload():
+            attachment = get_attachment(part, content_type)
+            attachment_content_type = attachment.get_content_type()
+
+            if (attachment and (attachment_content_type == content_type
+                                or attachment_content_type == 'text/plain')
+                    and is_base64(attachment.get_payload())):
+                break
+            else:
+                attachment = None
+
+    return attachment
+
+email_str = s3_bucket.get_key(‘email_file’).get_contents_as_string()
+email_msg = email.message_from_string(email_str)
